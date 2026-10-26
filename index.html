@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARANAFER - Dashboard Gerencial de Estoque</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b1120',
+                        cardBg: '#151e32',
+                        cardHeader: '#1e293b',
+                        accentBlue: '#2563eb',
+                        criticoRed: '#ef4444',
+                        atencaoYellow: '#f59e0b',
+                        okGreen: '#10b981',
+                        borderNavy: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0b1120; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0b1120; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .status-badge-critico { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid #ef4444; }
+        .status-badge-atencao { background-color: rgba(245, 158, 11, 0.2); color: #fde047; border: 1px solid #f59e0b; }
+        .status-badge-ok { background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid #10b981; }
+    </style>
+</head>
+<body class="p-4 md:p-6 custom-scrollbar">
+
+    <!-- CABEÇALHO -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-cardBg p-5 rounded-2xl border border-borderNavy mb-6 gap-4 shadow-xl">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-bold bg-amber-500 text-slate-950 px-3 py-1 rounded-full uppercase tracking-wider">PARANAFER</span>
+                <span id="syncStatusBadge" class="text-xs bg-emerald-900/60 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> A sincronizar...
+                </span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-2">Painel de Posicionamento de Estoque</h1>
+            <p class="text-sm text-slate-400">Visão Executiva em Tempo Real • Vendas & Produção</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <button onclick="sincronizarComGoogleSheets()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold flex items-center gap-2 border border-emerald-500 transition-all shadow-lg">
+                <i class="fa-solid fa-rotate text-white"></i> Sincronizar Google Sheets
+            </button>
+            <button onclick="exportarCSV()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 border border-slate-700 transition-all">
+                <i class="fa-solid fa-file-csv text-emerald-400"></i> Exportar CSV
+            </button>
+        </div>
+    </header>
+
+    <!-- CARDS DE KPI -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Total de Itens</p>
+            <h3 id="kpiTotalItens" class="text-2xl font-bold text-white mt-1">0</h3>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy border-l-4 border-l-red-500">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Itens Críticos / Ruptura</p>
+            <h3 id="kpiCriticos" class="text-2xl font-bold text-red-400 mt-1">0</h3>
+            <p id="kpiRupturaSub" class="text-[11px] text-slate-400 mt-1">0 em ruptura</p>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy border-l-4 border-l-amber-500">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Itens em Atenção</p>
+            <h3 id="kpiAtencao" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Cobertura 30% a 70%</p>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy border-l-4 border-l-emerald-500">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Itens OK</p>
+            <h3 id="kpiOK" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Cobertura &ge; 70%</p>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Cargas Agendadas</p>
+            <h3 id="kpiCargas" class="text-2xl font-bold text-cyan-400 mt-1">0 pç</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Arapongas / Cascavel</p>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Falta p/ Est. Máx.</p>
+            <h3 id="kpiFaltaKg" class="text-2xl font-bold text-purple-400 mt-1">0 ton</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Necessidade de produção</p>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-cardBg p-5 rounded-2xl border border-borderNavy shadow-lg">
+            <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-bar text-blue-400"></i> Saldo Disponível vs. Estoque Máximo (Peças)
+            </h3>
+            <div class="h-64">
+                <canvas id="chartSaldoVsMax"></canvas>
+            </div>
+        </div>
+        <div class="bg-cardBg p-5 rounded-2xl border border-borderNavy shadow-lg">
+            <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-emerald-400"></i> Nível de Cobertura de Estoque (%)
+            </h3>
+            <div class="h-64">
+                <canvas id="chartCobertura"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTROS E TABELA -->
+    <div class="bg-cardBg p-4 rounded-xl border border-borderNavy mb-4 flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex flex-wrap gap-3 items-center w-full md:w-auto">
+            <div class="relative w-full md:w-64">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
+                <input type="text" id="searchInput" onkeyup="aplicarFiltros()" placeholder="Buscar produto..." class="w-full bg-slate-900 border border-slate-700 text-white pl-9 pr-3 py-2 rounded-lg text-sm focus:outline-none focus:border-accentBlue">
+            </div>
+            <select id="familiaFilter" onchange="aplicarFiltros()" class="bg-slate-900 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm focus:outline-none">
+                <option value="TODOS">Todas as Famílias</option>
+                <option value="Telas">Telas</option>
+                <option value="Treliças">Treliças</option>
+                <option value="Outros">Outros / Rolo / Barra</option>
+            </select>
+            <select id="statusFilter" onchange="aplicarFiltros()" class="bg-slate-900 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm focus:outline-none">
+                <option value="TODOS">Todos os Status</option>
+                <option value="Crítico">Crítico (&lt; 30%)</option>
+                <option value="Atenção">Atenção (30% a 70%)</option>
+                <option value="OK">OK (&ge; 70%)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="bg-cardBg rounded-xl border border-borderNavy overflow-hidden mb-8 shadow-lg">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-cardHeader text-slate-300 font-semibold border-b border-borderNavy">
+                    <tr>
+                        <th class="p-3">Família</th>
+                        <th class="p-3">Produto</th>
+                        <th class="p-3 text-right">Estoque Físico</th>
+                        <th class="p-3 text-right">Agendado</th>
+                        <th class="p-3 text-right">Saldo Disponível</th>
+                        <th class="p-3 text-right">Estoque Máx.</th>
+                        <th class="p-3 text-right">Falta (kg)</th>
+                        <th class="p-3 text-center">Cobertura</th>
+                        <th class="p-3 text-center">Status</th>
+                        <th class="p-3">Observação</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-800 text-slate-200">
+                    <!-- Preenchido via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE LÓGICA E CONEXÃO -->
+    <script>
+        const urlGoogleScript = 'https://script.google.com/macros/s/AKfycbxaVEbo0ba6bDgFG2j_MkOr9mFsntyf40UvQGo8ArP0DxrTIIOSUAduPDlfYm4rI1A/exec';
+
+        let produtosAtuais = [];
+        let chart1 = null, chart2 = null;
+
+        async function sincronizarComGoogleSheets() {
+            const badge = document.getElementById('syncStatusBadge');
+            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A sincronizar...';
+
+            try {
+                const response = await fetch(urlGoogleScript);
+                const data = await response.json();
+                if(data && data.length > 0) {
+                    produtosAtuais = data;
+                    aplicarFiltros();
+                    
+                    const ultimaModPlanilha = data[0].UltimaAtualizacaoPlanilha || "Desconhecida";
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Atualizado no Sheets em: ${ultimaModPlanilha}`;
+                } else {
+                    alert('Nenhum dado retornado.');
+                    badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Sem dados';
+                }
+            } catch(e) {
+                console.error(e);
+                alert('Erro ao sincronizar. Verifique a ligação.');
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Erro na Sincronização';
+            }
+        }
+
+        function atualizarKPIs(lista) {
+            document.getElementById('kpiTotalItens').innerText = lista.length;
+            const crit = lista.filter(x => x.Status === 'Crítico').length;
+            const atenc = lista.filter(x => x.Status === 'Atenção').length;
+            const ok = lista.filter(x => x.Status === 'OK').length;
+            const rupt = lista.filter(x => x.Saldo <= 0).length;
+            const cargas = lista.reduce((a,b) => a + b.Agendado, 0);
+            const faltaKg = lista.reduce((a,b) => a + b.FaltaKg, 0);
+
+            document.getElementById('kpiCriticos').innerText = crit;
+            document.getElementById('kpiRupturaSub').innerText = `${rupt} em ruptura de estoque`;
+            document.getElementById('kpiAtencao').innerText = atenc;
+            document.getElementById('kpiOK').innerText = ok;
+            document.getElementById('kpiCargas').innerText = cargas.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('kpiFaltaKg').innerText = (faltaKg / 1000).toFixed(1).replace('.', ',') + ' ton';
+        }
+
+        function renderTabela(lista) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            lista.forEach(item => {
+                let statusBadge = '';
+                if(item.Status === 'OK') statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-bold status-badge-ok">OK</span>';
+                else if(item.Status === 'Atenção') statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-bold status-badge-atencao">Atenção</span>';
+                else statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-bold status-badge-critico">Crítico</span>';
+
+                let saldoClass = item.Saldo < 0 ? 'text-red-400 font-extrabold' : 'text-emerald-400 font-bold';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/50 border-b border-slate-800">
+                        <td class="p-3 text-slate-400">${item.Familia}</td>
+                        <td class="p-3 font-semibold text-white">${item.Produto}</td>
+                        <td class="p-3 text-right font-mono">${item.Estoque.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono text-cyan-400">${item.Agendado.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono ${saldoClass}">${item.Saldo.toLocaleString('pt-BR')} ${item.Saldo <= 0 ? '<span class="text-[10px] bg-red-950 text-red-400 px-1 rounded ml-1">RUPTURA</span>' : ''}</td>
+                        <td class="p-3 text-right font-mono text-slate-400">${item.Max.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-right font-mono text-purple-300">${item.FaltaKg.toLocaleString('pt-BR')} kg</td>
+                        <td class="p-3 text-center font-bold">${item.Cobertura}%</td>
+                        <td class="p-3 text-center">${statusBadge}</td>
+                        <td class="p-3 text-xs text-slate-400">${item.Obs}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderGraficos(lista) {
+            const labels = lista.map(x => x.Produto);
+            const saldos = lista.map(x => x.Saldo);
+            const maxs = lista.map(x => x.Max);
+            const coberturas = lista.map(x => x.Cobertura);
+            const coresCob = lista.map(x => x.Status === 'OK' ? '#10b981' : (x.Status === 'Atenção' ? '#f59e0b' : '#ef4444'));
+
+            if(chart1) chart1.destroy();
+            if(chart2) chart2.destroy();
+
+            const ctx1 = document.getElementById('chartSaldoVsMax').getContext('2d');
+            chart1 = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Saldo Disponível', data: saldos, backgroundColor: '#0284c7' },
+                        { label: 'Estoque Máximo', data: maxs, backgroundColor: 'rgba(51, 65, 85, 0.5)' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { 
+                            ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('chartCobertura').getContext('2d');
+            chart2 = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Cobertura (%)', data: coberturas, backgroundColor: coresCob }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                        y: { 
+                            ticks: { 
+                                color: '#94a3b8', 
+                                font: { size: 10 },
+                                autoSkip: false 
+                            }, 
+                            grid: { display: false } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function aplicarFiltros() {
+            const searchInput = document.getElementById('searchInput');
+            const familiaFilter = document.getElementById('familiaFilter');
+            const statusFilter = document.getElementById('statusFilter');
+
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
+            const familia = familiaFilter ? familiaFilter.value : 'TODOS';
+            const status = statusFilter ? statusFilter.value : 'TODOS';
+
+            const filtrados = produtosAtuais.filter(item => {
+                const matchSearch = item.Produto.toLowerCase().includes(search) || item.Obs.toLowerCase().includes(search);
+                const matchFamilia = familia === 'TODOS' || item.Familia === familia;
+                const matchStatus = status === 'TODOS' || item.Status === status;
+                return matchSearch && matchFamilia && matchStatus;
+            });
+
+            atualizarKPIs(filtrados);
+            renderTabela(filtrados);
+            renderGraficos(filtrados);
+        }
+
+        function exportarCSV() {
+            let csv = 'Familia;Produto;Estoque Fisico;Agendado;Saldo Disponivel;Estoque Max;Falta (kg);Cobertura (%);Status;Observacao\n';
+            produtosAtuais.forEach(x => {
+                csv += `${x.Familia};${x.Produto};${x.Estoque};${x.Agendado};${x.Saldo};${x.Max};${x.FaltaKg};${x.Cobertura}%;${x.Status};${x.Obs}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `estoque_paranafer_estoque1.csv`;
+            a.click();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            sincronizarComGoogleSheets();
+        });
+    </script>
+</body>
+</html>
