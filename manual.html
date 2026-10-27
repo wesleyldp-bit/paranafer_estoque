@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARANAFER - Manual do Usuário</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b1120',
+                        cardBg: '#151e32',
+                        cardHeader: '#1e293b',
+                        accentBlue: '#2563eb',
+                        criticoRed: '#ef4444',
+                        atencaoYellow: '#f59e0b',
+                        okGreen: '#10b981',
+                        borderNavy: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0b1120; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0b1120; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-4 md:p-8 custom-scrollbar max-w-7xl mx-auto">
+
+    <!-- CABEÇALHO -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-cardBg p-5 rounded-2xl border border-borderNavy mb-8 gap-4 shadow-xl">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-bold bg-amber-500 text-slate-950 px-3 py-1 rounded-full uppercase tracking-wider">PARANAFER</span>
+                <span class="text-xs bg-sky-900/60 text-sky-300 border border-sky-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <i class="fa-solid fa-book text-sky-400"></i> Guia Oficial de Vendas
+                </span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-2">Manual de Utilização do Painel de Estoque</h1>
+            <p class="text-sm text-slate-400">Instruções Práticas para a Equipa Comercial & Atendimento</p>
+        </div>
+
+        <div>
+            <a href="index.html" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold flex items-center gap-2 border border-emerald-500 transition-all shadow-lg">
+                <i class="fa-solid fa-chart-line text-white"></i> Voltar ao Painel
+            </a>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO DO MANUAL -->
+    <div class="space-y-6">
+
+        <!-- SECÇÃO 1: CABEÇALHO E AUDITORIA -->
+        <div class="bg-cardBg p-6 rounded-2xl border border-borderNavy shadow-lg">
+            <h2 class="text-lg font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left"></i> 1. Cabeçalho e Auditoria de Dados
+            </h2>
+            <p class="text-sm text-slate-300 mb-4 leading-relaxed">
+                No topo do painel, você encontra os indicadores de atualização e botões de ação essenciais para o seu dia a dia:
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                    <span class="text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full inline-block mb-2">🟢 Selo Verde</span>
+                    <h3 class="text-sm font-bold text-white mb-1">Atualizado no Sheets em:</h3>
+                    <p class="text-xs text-slate-400">Indica a data e hora exatas em que a planilha oficial sofreu a última alteração na fábrica. Verifique este selo para garantir a frescura dos dados.</p>
+                </div>
+                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                    <span class="text-xs font-bold bg-emerald-700 text-white px-2.5 py-1 rounded-full inline-block mb-2">🔄 Botão Verde</span>
+                    <h3 class="text-sm font-bold text-white mb-1">Sincronizar Google Sheets</h3>
+                    <p class="text-xs text-slate-400">Atualiza os indicadores, gráficos e tabela instantaneamente com o servidor do Google, sem precisar recarregar a página.</p>
+                </div>
+                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                    <span class="text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full inline-block mb-2">📥 Exportar CSV</span>
+                    <h3 class="text-sm font-bold text-white mb-1">Download em Excel</h3>
+                    <p class="text-xs text-slate-400">Baixa uma cópia estruturada de todos os dados filtrados na tela para relatórios ou cotações personalizadas.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECÇÃO 2: CARTÕES DE KPI -->
+        <div class="bg-cardBg p-6 rounded-2xl border border-borderNavy shadow-lg">
+            <h2 class="text-lg font-bold text-amber-400 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-gauge-high"></i> 2. Indicadores de Desempenho (Cartões de KPI)
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                <div class="bg-slate-900/50 p-3.5 rounded-xl border border-slate-800">
+                    <span class="font-bold text-white">TOTAL DE ITENS:</span>
+                    <p class="text-xs text-slate-400 mt-0.5">Quantidade de produtos atualmente monitorados no sistema.</p>
+                </div>
+                <div class="bg-slate-900/50 p-3.5 rounded-xl border border-slate-800 border-l-4 border-l-red-500">
+                    <span class="font-bold text-red-400">CRÍTICOS / RUPTURA:</span>
+                    <p class="text-xs text-slate-400 mt-0.5">Itens com cobertura &lt; 30% ou saldo negativo. Redobre a atenção antes de prometer prazos.</p>
+                </div>
+                <div class="bg-slate-900/50 p-3.5 rounded-xl border border-slate-800 border-l-4 border-l-amber-500">
+                    <span class="font-bold text-amber-400">ITENS EM ATENÇÃO:</span>
+                    <p class="text-xs text-slate-400 mt-0.5">Cobertura entre 30% e 70%. Estoque intermediário para vendas de grande volume.</p>
+                </div>
+                <div class="bg-slate-900/50 p-3.5 rounded-xl border border-slate-800 border-l-4 border-l-emerald-500">
+                    <span class="font-bold text-emerald-400">ITENS OK:</span>
+                    <p class="text-xs text-slate-400 mt-0.5">Cobertura &ge; 70%. Pronta entrega garantida e liberação imediata.</p>
+                </div>
+                <div class="bg-slate-900/50 p-3.5 rounded-xl border border-slate-800">
+                    <span class="font-bold text-cyan-400">CARGAS AGENDADAS:</span>
+                    <p class="text-xs text-slate-400 mt-0.5">Volume total em peças já comprometido para entregas programadas (ex: Arapongas / Cascavel).</p>
+                </div>
+                <div class="bg-slate-900/50 p-3.5 rounded-xl border border-slate-800">
+                    <span class="font-bold text-purple-400">FALTA P/ EST. MÁX.:</span>
+                    <p class="text-xs text-slate-400 mt-0.5">Necessidade de produção em toneladas para preencher a capacidade total da fábrica.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECÇÃO 3: FILTROS E GRÁFICOS -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-cardBg p-6 rounded-2xl border border-borderNavy shadow-lg">
+                <h2 class="text-lg font-bold text-sky-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-filter"></i> 3. Como Usar os Filtros
+                </h2>
+                <ul class="space-y-3 text-sm text-slate-300">
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-magnifying-glass text-slate-500 mt-1"></i>
+                        <div><strong>Buscar produto:</strong> Digite a medida ou código (ex: <code class="bg-slate-900 px-1.5 py-0.5 rounded text-amber-400">EQ45</code>, <code class="bg-slate-900 px-1.5 py-0.5 rounded text-amber-400">Q92</code>, <code class="bg-slate-900 px-1.5 py-0.5 rounded text-amber-400">H8SLE</code>) para filtrar a tabela e os gráficos instantaneamente.</div>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-layer-group text-slate-500 mt-1"></i>
+                        <div><strong>Todas as Famílias:</strong> Segmente a visualização por categoria: <em>Telas</em>, <em>Treliças</em> ou <em>Outros / Rolo / Barra</em>.</div>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-list-check text-slate-500 mt-1"></i>
+                        <div><strong>Todos os Status:</strong> Inspecione rapidamente apenas os itens que precisam de atenção urgente (<em>Crítico</em>, <em>Atenção</em> ou <em>OK</em>).</div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-cardBg p-6 rounded-2xl border border-borderNavy shadow-lg">
+                <h2 class="text-lg font-bold text-cyan-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-column"></i> 4. Interpretação dos Gráficos
+                </h2>
+                <div class="space-y-3 text-sm text-slate-300">
+                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                        <h3 class="font-bold text-white mb-1">Saldo Disponível vs. Estoque Máximo</h3>
+                        <p class="text-xs text-slate-400">• <strong>Barra Azul:</strong> Saldo livre em peças no pátio.<br>• <strong>Barra Cinza:</strong> Teto de armazenamento da fábrica.</p>
+                    </div>
+                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                        <h3 class="font-bold text-white mb-1">Nível de Cobertura (%)</h3>
+                        <p class="text-xs text-slate-400">• Percentual de preenchimento do estoque.<br>• <strong>Barras Vermelhas para a Esquerda:</strong> Indicam que os agendamentos ultrapassam o físico (Ruptura).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECÇÃO 4: TABELA E CORES -->
+        <div class="bg-cardBg p-6 rounded-2xl border border-borderNavy shadow-lg mb-8">
+            <h2 class="text-lg font-bold text-purple-400 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-table-cells"></i> 5. Tabela Detalhada & Significado das Cores
+            </h2>
+            <p class="text-sm text-slate-300 mb-4">A tabela é a ferramenta principal no atendimento ao cliente. Observe a coluna <strong>Saldo Disponível</strong>:</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/20 text-emerald-300">
+                    <div class="font-bold text-emerald-400 flex items-center gap-2 mb-1">
+                        <span class="w-3 h-3 rounded-full bg-emerald-400"></span> Fundo Verde (Saldo Positivo)
+                    </div>
+                    <p class="text-xs leading-relaxed text-slate-300">Indica que o produto possui saldo físico livre de compromissos. Liberado para venda e faturamento imediato.</p>
+                </div>
+                <div class="p-4 rounded-xl border border-red-500/40 bg-red-950/20 text-red-300">
+                    <div class="font-bold text-red-400 flex items-center gap-2 mb-1">
+                        <span class="w-3 h-3 rounded-full bg-red-400"></span> Fundo Vermelho + Etiqueta RUPTURA
+                    </div>
+                    <p class="text-xs leading-relaxed text-slate-300">Indica saldo zerado ou negativo. As cargas agendadas superam o físico disponível. <strong>Consulte a produção antes de confirmar o prazo de entrega com o cliente!</strong></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RODAPÉ -->
+    <footer class="text-center text-xs text-slate-500 mt-12 py-4 border-t border-slate-800">
+        PARANAFER — Sistema de Posicionamento de Estoque • Uso Interno Comercial
+    </footer>
+
+</body>
+</html>
