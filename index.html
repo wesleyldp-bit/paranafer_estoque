@@ -97,27 +97,7 @@
         </div>
     </div>
 
-    <!-- GRÁFICOS -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="bg-cardBg p-5 rounded-2xl border border-borderNavy shadow-lg">
-            <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-chart-bar text-blue-400"></i> Saldo Disponível vs. Estoque Máximo (Peças)
-            </h3>
-            <div class="h-64">
-                <canvas id="chartSaldoVsMax"></canvas>
-            </div>
-        </div>
-        <div class="bg-cardBg p-5 rounded-2xl border border-borderNavy shadow-lg">
-            <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-chart-line text-emerald-400"></i> Nível de Cobertura de Estoque (%)
-            </h3>
-            <div class="h-64">
-                <canvas id="chartCobertura"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- FILTROS E TABELA -->
+ <!-- FILTROS E TABELA -->
     <div class="bg-cardBg p-4 rounded-xl border border-borderNavy mb-4 flex flex-wrap gap-4 items-center justify-between">
         <div class="flex flex-wrap gap-3 items-center w-full md:w-auto">
             <div class="relative w-full md:w-64">
@@ -139,6 +119,27 @@
         </div>
     </div>
 
+    <!-- GRÁFICOS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-cardBg p-5 rounded-2xl border border-borderNavy shadow-lg">
+            <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-bar text-blue-400"></i> Saldo Disponível vs. Estoque Máximo (Peças)
+            </h3>
+            <div class="h-64">
+                <canvas id="chartSaldoVsMax"></canvas>
+            </div>
+        </div>
+        <div class="bg-cardBg p-5 rounded-2xl border border-borderNavy shadow-lg">
+            <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-emerald-400"></i> Nível de Cobertura de Estoque (%)
+            </h3>
+            <div class="h-64">
+                <canvas id="chartCobertura"></canvas>
+            </div>
+        </div>
+    </div>
+
+   
     <!-- TABELA -->
     <div class="bg-cardBg rounded-xl border border-borderNavy overflow-hidden mb-8 shadow-lg">
         <div class="overflow-x-auto custom-scrollbar">
@@ -212,7 +213,7 @@
             document.getElementById('kpiFaltaKg').innerText = (faltaKg / 1000).toFixed(1).replace('.', ',') + ' ton';
         }
 
-        function renderTabela(lista) {
+       function renderTabela(lista) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
@@ -222,7 +223,13 @@
                 else if(item.Status === 'Atenção') statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-bold status-badge-atencao">Atenção</span>';
                 else statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-bold status-badge-critico">Crítico</span>';
 
-                let saldoClass = item.Saldo < 0 ? 'text-red-400 font-extrabold' : 'text-emerald-400 font-bold';
+                // Define a cor de fundo e do texto com base no saldo (Negativo/Ruptura = Vermelho, Positivo = Verde)
+                let saldoStyle = '';
+                if (item.Saldo < 0) {
+                    saldoStyle = 'background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid #ef4444; border-radius: 6px; padding: 4px 8px;';
+                } else {
+                    saldoStyle = 'background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid #10b981; border-radius: 6px; padding: 4px 8px;';
+                }
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-800/50 border-b border-slate-800">
@@ -230,7 +237,11 @@
                         <td class="p-3 font-semibold text-white">${item.Produto}</td>
                         <td class="p-3 text-right font-mono">${item.Estoque.toLocaleString('pt-BR')}</td>
                         <td class="p-3 text-right font-mono text-cyan-400">${item.Agendado.toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-right font-mono ${saldoClass}">${item.Saldo.toLocaleString('pt-BR')} ${item.Saldo <= 0 ? '<span class="text-[10px] bg-red-950 text-red-400 px-1 rounded ml-1">RUPTURA</span>' : ''}</td>
+                        <td class="p-3 text-right font-mono">
+                            <span style="${saldoStyle}">
+                                ${item.Saldo.toLocaleString('pt-BR')} ${item.Saldo < 0 ? '<span class="text-[10px] bg-red-950 text-red-300 px-1 rounded ml-1">RUPTURA</span>' : ''}
+                            </span>
+                        </td>
                         <td class="p-3 text-right font-mono text-slate-400">${item.Max.toLocaleString('pt-BR')}</td>
                         <td class="p-3 text-right font-mono text-purple-300">${item.FaltaKg.toLocaleString('pt-BR')} kg</td>
                         <td class="p-3 text-center font-bold">${item.Cobertura}%</td>
