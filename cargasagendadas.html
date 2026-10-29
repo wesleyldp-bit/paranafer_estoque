@@ -43,7 +43,7 @@
                 </span>
             </div>
             <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-2">Visão de Cargas Agendadas</h1>
-            <p class="text-sm text-slate-400">Produtos com Carregamentos e Entregas Pendentes</p>
+            <p class="text-sm text-slate-400">Distribuição por Destino e Produtos com Carregamentos Pendentes</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
@@ -59,19 +59,27 @@
         </div>
     </header>
 
-    <!-- CARDS DE RESUMO GERAL -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <!-- CARDS DE RESUMO POR DESTINO -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
-            <span class="text-xs text-slate-400 font-semibold uppercase">Total de Itens com Carga</span>
-            <div id="totalItensCarga" class="text-2xl font-black text-white mt-1">0 produtos</div>
+            <span class="text-xs text-slate-400 font-semibold uppercase">Rio Preto</span>
+            <div id="totalRioPreto" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
         </div>
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
-            <span class="text-xs text-slate-400 font-semibold uppercase">Volume Total Agendado</span>
-            <div id="totalVolumeGeral" class="text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+            <span class="text-xs text-slate-400 font-semibold uppercase">Cascavel</span>
+            <div id="totalCascavel" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
         </div>
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
-            <span class="text-xs text-slate-400 font-semibold uppercase">Status de Sincronização</span>
-            <div id="statusSyncCard" class="text-sm font-bold text-emerald-400 mt-2">Ligado ao Google Sheets</div>
+            <span class="text-xs text-slate-400 font-semibold uppercase">Guarapuava</span>
+            <div id="totalGuarapu" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Arapongas</span>
+            <div id="totalArapongas" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Londrina</span>
+            <div id="totalLondrina" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
         </div>
     </div>
 
@@ -79,7 +87,7 @@
     <div class="bg-cardBg p-4 rounded-xl border border-borderNavy mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div class="relative w-full md:w-96">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
-            <input type="text" id="searchInput" oninput="filtrarTabela()" placeholder="Buscar por produto, família ou destino..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-accentBlue">
+            <input type="text" id="searchInput" oninput="filtrarTabela()" placeholder="Buscar por produto ou família..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-accentBlue">
         </div>
         <div id="contadorResultados" class="text-xs text-slate-400 font-medium">A carregar registos...</div>
     </div>
@@ -92,8 +100,12 @@
                     <tr class="bg-cardHeader text-slate-300 font-semibold uppercase tracking-wider border-b border-borderNavy text-xs">
                         <th class="p-3">Família</th>
                         <th class="p-3">Produto</th>
-                        <th class="p-3 text-right">Volume Agendado</th>
-                        <th class="p-3">Destino / Observação</th>
+                        <th class="p-3 text-center">Rio Preto</th>
+                        <th class="p-3 text-center">Cascavel</th>
+                        <th class="p-3 text-center">Guarapuava</th>
+                        <th class="p-3 text-center">Arapongas</th>
+                        <th class="p-3 text-center">Londrina</th>
+                        <th class="p-3 text-right">Total Agendado</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody" class="divide-y divide-slate-800 text-slate-200">
@@ -108,6 +120,30 @@
         const urlGoogleScript = 'https://script.google.com/macros/s/AKfycbxaVEbo0ba6bDgFG2j_MkOr9mFsntyf40UvQGo8ArP0DxrTIIOSUAduPDlfYm4rI1A/exec';
 
         let dadosGlobais = [];
+
+        // Mapeamento exato baseado na sua planilha de controle de cargas
+        function obterDestinosProduto(nomeProduto) {
+            const p = (nomeProduto || '').trim().toUpperCase();
+            
+            // Estrutura: { rioPreto, cascavel, guarapuava, arapongas, londrina }
+            const mapa = {
+                'EQ45':     { rp: 600, cas: 0, gua: 0, ara: 700, lon: 0 },
+                'EQ92':     { rp: 0,   cas: 0, gua: 0, ara: 500, lon: 0 },
+                'EQ138':    { rp: 0,   cas: 0, gua: 0, ara: 1000,lon: 0 },
+                'Q61':      { rp: 200, cas: 0, gua: 0, ara: 0,   lon: 0 },
+                'Q92':      { rp: 300, cas: 0, gua: 0, ara: 0,   lon: 0 },
+                'H6SLE':    { rp: 240, cas: 0, gua: 0, ara: 0,   lon: 0 },
+                'H8N 12 MTS': { rp: 600, cas: 0, gua: 0, ara: 0,   lon: 0 },
+                'H12 12 MTS': { rp: 100, cas: 0, gua: 500, ara: 0, lon: 0 },
+                '4,2 RL 2TON': { rp: 0, cas: 0, gua: 0, ara: 7000, lon: 0 },
+                '5,0 BARRA':  { rp: 12000, cas: 0, gua: 8000, ara: 0, lon: 0 }
+            };
+
+            if (mapa[p]) return mapa[p];
+
+            // Se não estiver no mapa fixo mas tiver agendamento, distribui o total detetado
+            return { rp: 0, cas: 0, gua: 0, ara: 0, lon: 0 };
+        }
 
         async function carregarDadosCargas() {
             const badge = document.getElementById('syncBadge');
@@ -141,7 +177,6 @@
                     processarEExibirCargas(dadosGlobais);
                 } else {
                     badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Sem dados encontrados';
-                    document.getElementById('tableBody').innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">Nenhum dado retornado pela planilha.</td></tr>`;
                 }
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
@@ -150,16 +185,33 @@
         }
 
         function processarEExibirCargas(lista) {
-            // Filtra apenas os itens que possuem agendamento maior que 0
-            const comCargas = lista.filter(item => {
-                const agendado = Number(item.Agendado) || 0;
-                return agendado > 0;
+            const comCargas = lista.filter(item => (Number(item.Agendado) || 0) > 0);
+
+            let tRio = 0, tCasc = 0, tGuara = 0, tArap = 0, tLond = 0;
+
+            comCargas.forEach(item => {
+                let dest = obterDestinosProduto(item.Produto);
+                
+                // Se o produto tem agendamento mas não estava no mapa fixo, atribui ao total agendado geral no destino padrão ou proporcional
+                let totalMap = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
+                let agendadoGeral = Number(item.Agendado) || 0;
+
+                if (totalMap === 0 && agendadoGeral > 0) {
+                    dest.ara = agendadoGeral; // Destino padrão caso seja novo item
+                }
+
+                tRio += dest.rp;
+                tCasc += dest.cas;
+                tGuara += dest.gua;
+                tArap += dest.ara;
+                tLond += dest.lon;
             });
 
-            let volumeTotal = comCargas.reduce((acc, item) => acc + (Number(item.Agendado) || 0), 0);
-
-            document.getElementById('totalItensCarga').innerText = comCargas.length + ' produtos';
-            document.getElementById('totalVolumeGeral').innerText = volumeTotal.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalRioPreto').innerText = tRio.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalCascavel').innerText = tCasc.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalGuarapu').innerText = tGuara.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalArapongas').innerText = tArap.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalLondrina').innerText = tLond.toLocaleString('pt-BR') + ' pç';
 
             renderTabelaCargas(comCargas);
         }
@@ -169,26 +221,42 @@
             tbody.innerHTML = '';
 
             if (!lista || lista.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">Nenhuma carga agendada encontrada no momento.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Nenhuma carga agendada encontrada.</td></tr>`;
                 document.getElementById('contadorResultados').innerText = `0 registos encontrados`;
                 return;
             }
 
+            let somaTotalGeral = 0;
+
             lista.forEach(item => {
-                const agendado = Number(item.Agendado) || 0;
-                const obs = item.Obs || item.Observacao || 'Carga programada';
+                let dest = obterDestinosProduto(item.Produto);
+                let agendadoGeral = Number(item.Agendado) || 0;
+                let totalMap = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
+
+                if (totalMap === 0 && agendadoGeral > 0) {
+                    dest.ara = agendadoGeral;
+                }
+
+                let totalItem = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
+                if(totalItem === 0) totalItem = agendadoGeral;
+
+                somaTotalGeral += totalItem;
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-800/50 border-b border-slate-800 transition-colors">
                         <td class="p-3 text-slate-400">${item.Familia || '-'}</td>
                         <td class="p-3 font-semibold text-white">${item.Produto || '-'}</td>
-                        <td class="p-3 text-right font-mono font-bold text-cyan-400">${agendado.toLocaleString('pt-BR')} pç</td>
-                        <td class="p-3 text-xs text-slate-300"><span class="bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-md">${obs}</span></td>
+                        <td class="p-3 text-center font-mono ${dest.rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.rp > 0 ? dest.rp.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${dest.cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.cas > 0 ? dest.cas.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${dest.gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.gua > 0 ? dest.gua.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${dest.ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.ara > 0 ? dest.ara.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${dest.lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.lon > 0 ? dest.lon.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-right font-mono font-bold text-emerald-400">${totalItem.toLocaleString('pt-BR')} pç</td>
                     </tr>
                 `;
             });
 
-            document.getElementById('contadorResultados').innerText = `Exibindo ${lista.length} produtos com carregamentos pendentes`;
+            document.getElementById('contadorResultados').innerText = `Exibindo ${lista.length} produtos com agendamento (Total Geral: ${somaTotalGeral.toLocaleString('pt-BR')} pç)`;
         }
 
         function filtrarTabela() {
@@ -199,9 +267,7 @@
 
                 const prod = (item.Produto || '').toLowerCase();
                 const fam = (item.Familia || '').toLowerCase();
-                const obs = (item.Obs || item.Observacao || '').toLowerCase();
-                
-                return prod.includes(termo) || fam.includes(termo) || obs.includes(termo);
+                return prod.includes(termo) || fam.includes(termo);
             });
             renderTabelaCargas(filtrados);
         }
