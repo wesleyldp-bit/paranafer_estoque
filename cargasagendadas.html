@@ -121,26 +121,6 @@
 
         let dadosGlobais = [];
 
-        function obterDestinosProduto(nomeProduto) {
-            const p = (nomeProduto || '').trim().toUpperCase();
-            
-            const mapa = {
-                'EQ45':        { rp: 600,   cas: 0, gua: 0, ara: 700,  lon: 0 },
-                'EQ92':        { rp: 0,     cas: 0, gua: 0, ara: 500,  lon: 0 },
-                'EQ138':       { rp: 0,     cas: 0, gua: 0, ara: 1000, lon: 0 },
-                'Q61':         { rp: 200,   cas: 0, gua: 0, ara: 0,    lon: 0 },
-                'Q92':         { rp: 300,   cas: 0, gua: 0, ara: 0,    lon: 0 },
-                'H6SLE':       { rp: 240,   cas: 0, gua: 0, ara: 0,    lon: 0 },
-                'H8N 12 MTS':  { rp: 600,   cas: 0, gua: 0, ara: 0,    lon: 0 },
-                'H12 12 MTS':  { rp: 100,   cas: 0, gua: 0, ara: 500,  lon: 0 },
-                '4,2 RL 2TON': { rp: 0,     cas: 0, gua: 0, ara: 7000, lon: 0 },
-                '5,0 BARRA':   { rp: 12000, cas: 0, gua: 0, ara: 8000, lon: 0 }
-            };
-
-            if (mapa[p]) return mapa[p];
-            return { rp: 0, cas: 0, gua: 0, ara: 0, lon: 0 };
-        }
-
         function obterUnidade(familia, produto) {
             const fam = (familia || '').trim().toUpperCase();
             const prod = (produto || '').trim().toUpperCase();
@@ -195,17 +175,15 @@
             let tRioKg = 0, tCascKg = 0, tGuaraKg = 0, tArapKg = 0, tLondKg = 0;
 
             comCargas.forEach(item => {
-                let dest = obterDestinosProduto(item.Produto);
-                let pesoUnit = Number(item.Peso) || 1; // Lê o peso dinâmico vindo da coluna J do Sheets
+                let pesoUnit = Number(item.Peso) || 1;
 
-                tRioKg += dest.rp * pesoUnit;
-                tCascKg += dest.cas * pesoUnit;
-                tGuaraKg += dest.gua * pesoUnit;
-                tArapKg += dest.ara * pesoUnit;
-                tLondKg += dest.lon * pesoUnit;
+                tRioKg += (Number(item.RioPreto) || 0) * pesoUnit;
+                tCascKg += (Number(item.Cascavel) || 0) * pesoUnit;
+                tGuaraKg += (Number(item.Guarapuava) || 0) * pesoUnit;
+                tArapKg += (Number(item.Arapongas) || 0) * pesoUnit;
+                tLondKg += (Number(item.Londrina) || 0) * pesoUnit;
             });
 
-            // Atualiza os cartões de topo multiplicando pelas quantidades e pesos reais em Kg
             document.getElementById('totalRioPreto').innerText = Math.round(tRioKg).toLocaleString('pt-BR') + ' Kg';
             document.getElementById('totalCascavel').innerText = Math.round(tCascKg).toLocaleString('pt-BR') + ' Kg';
             document.getElementById('totalGuarapu').innerText = Math.round(tGuaraKg).toLocaleString('pt-BR') + ' Kg';
@@ -228,11 +206,13 @@
             let somaTotalGeral = 0;
 
             lista.forEach(item => {
-                let dest = obterDestinosProduto(item.Produto);
-                let agendadoGeral = Number(item.Agendado) || 0;
-                let totalItem = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
-                if (totalItem === 0) totalItem = agendadoGeral;
-
+                let rp = Number(item.RioPreto) || 0;
+                let cas = Number(item.Cascavel) || 0;
+                let gua = Number(item.Guarapuava) || 0;
+                let ara = Number(item.Arapongas) || 0;
+                let lon = Number(item.Londrina) || 0;
+                
+                let totalItem = Number(item.Agendado) || (rp + cas + gua + ara + lon);
                 somaTotalGeral += totalItem;
 
                 const unidade = obterUnidade(item.Familia, item.Produto);
@@ -241,11 +221,11 @@
                     <tr class="hover:bg-slate-800/50 border-b border-slate-800 transition-colors">
                         <td class="p-3 text-slate-400">${item.Familia || '-'}</td>
                         <td class="p-3 font-semibold text-white">${item.Produto || '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.rp > 0 ? dest.rp.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.cas > 0 ? dest.cas.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.gua > 0 ? dest.gua.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.ara > 0 ? dest.ara.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.lon > 0 ? dest.lon.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${rp > 0 ? rp.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${cas > 0 ? cas.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${gua > 0 ? gua.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${ara > 0 ? ara.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${lon > 0 ? lon.toLocaleString('pt-BR') : '-'}</td>
                         <td class="p-3 text-right font-mono font-bold text-emerald-400">${totalItem.toLocaleString('pt-BR')} ${unidade}</td>
                     </tr>
                 `;
