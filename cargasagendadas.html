@@ -121,7 +121,6 @@
 
         let dadosGlobais = [];
 
-        // Função auxiliar para procurar propriedades com diferentes variações de nomes na planilha
         function extrairValor(item, chaves) {
             for (let k of chaves) {
                 if (item[k] !== undefined && item[k] !== null && item[k] !== '') {
@@ -131,7 +130,7 @@
             return 0;
         }
 
-       async function carregarDadosCargas() {
+        async function carregarDadosCargas() {
             const badge = document.getElementById('syncBadge');
             badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A sincronizar...';
 
@@ -139,7 +138,6 @@
                 const response = await fetch(urlGoogleScript);
                 const resultado = await response.json();
                 
-                // Trata o formato quer venha direto como array ou encapsulado num objeto (ex: {dados: [...]})
                 let listaProdutos = [];
                 let ultimaMod = "Desconhecida";
 
@@ -259,4 +257,13 @@
                 const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
                 
                 const temCarga = (rp + cas + gua + ara + lon) > 0 || (Number(item.Agendado) || 0) > 0;
-                const matchTexto = prod.includes(termo) ||
+                const matchTexto = prod.includes(termo) || fam.includes(termo);
+                return temCarga && matchTexto;
+            });
+            renderTabelaCargas(filtrados);
+        }
+
+        window.addEventListener('DOMContentLoaded', carregarDadosCargas);
+    </script>
+</body>
+</html>
