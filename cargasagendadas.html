@@ -131,27 +131,44 @@
             return 0;
         }
 
-        async function carregarDadosCargas() {
+       async function carregarDadosCargas() {
             const badge = document.getElementById('syncBadge');
             badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A sincronizar...';
 
             try {
                 const response = await fetch(urlGoogleScript);
-                const data = await response.json();
+                const resultado = await response.json();
                 
-                if (data && data.length > 0) {
-                    dadosGlobais = data;
+                // Trata o formato quer venha direto como array ou encapsulado num objeto (ex: {dados: [...]})
+                let listaProdutos = [];
+                let ultimaMod = "Desconhecida";
+
+                if (Array.isArray(resultado)) {
+                    listaProdutos = resultado;
+                } else if (resultado && Array.isArray(resultado.dados)) {
+                    listaProdutos = resultado.dados;
+                    ultimaMod = resultado.ultimaAtualizacao || "Recente";
+                } else if (resultado && Array.isArray(resultado.produtos)) {
+                    listaProdutos = resultado.produtos;
+                }
+
+                if (listaProdutos.length > 0) {
+                    dadosGlobais = listaProdutos;
                     
-                    const ultimaMod = data[0].UltimaAtualizacaoPlanilha || "Desconhecida";
+                    if(listaProdutos[0].UltimaAtualizacaoPlanilha) {
+                        ultimaMod = listaProdutos[0].UltimaAtualizacaoPlanilha;
+                    }
+
                     badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Atualizado no Sheets em: ${ultimaMod}`;
 
                     processarEExibirCargas(dadosGlobais);
                 } else {
-                    badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Sem dados';
+                    badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Sem dados encontrados';
+                    document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">A API respondeu, mas não encontrou registos válidos.</td></tr>`;
                 }
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
-                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Erro na Sincronização';
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Erro de Ligação';
             }
         }
 
