@@ -92,8 +92,8 @@
         </div>
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy">
             <p class="text-xs font-semibold text-slate-400 uppercase">Cargas Agendadas</p>
-            <h3 id="kpiCargas" class="text-2xl font-bold text-cyan-400 mt-1">0 pç</h3>
-            <p class="text-[11px] text-slate-400 mt-1">Arapongas / Cascavel</p>
+            <h3 id="kpiCargas" class="text-2xl font-bold text-cyan-400 mt-1">0 ton</h3>
+            <p id="kpiCargasSub" class="text-[11px] text-slate-400 mt-1">Total Consolidado</p>
         </div>
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy">
             <p class="text-xs font-semibold text-slate-400 uppercase">Falta p/ Est. Máx.</p>
@@ -206,14 +206,26 @@
             const atenc = lista.filter(x => x.Status === 'Atenção').length;
             const ok = lista.filter(x => x.Status === 'OK').length;
             const rupt = lista.filter(x => x.Saldo <= 0).length;
-            const cargas = lista.reduce((a,b) => a + b.Agendado, 0);
-            const faltaKg = lista.reduce((a,b) => a + b.FaltaKg, 0);
+
+            // Cálculo do peso total das cargas agendadas (Agendado * Peso Unitário da Coluna J)
+            const cargasKg = lista.reduce((acumulador, item) => {
+                const agendado = Number(item.Agendado) || 0;
+                const pesoUnit = Number(item.Peso) || 1;
+                return acumulador + (agendado * pesoUnit);
+            }, 0);
+
+            const faltaKg = lista.reduce((a,b) => a + (Number(b.FaltaKg) || 0), 0);
 
             document.getElementById('kpiCriticos').innerText = crit;
             document.getElementById('kpiRupturaSub').innerText = `${rupt} em ruptura de estoque`;
             document.getElementById('kpiAtencao').innerText = atenc;
             document.getElementById('kpiOK').innerText = ok;
-            document.getElementById('kpiCargas').innerText = cargas.toLocaleString('pt-BR') + ' pç';
+
+            // Exibe o peso em Toneladas no valor principal e o peso exato em Kg no subtexto
+            const cargasTon = (cargasKg / 1000).toFixed(1).replace('.', ',');
+            document.getElementById('kpiCargas').innerText = `${cargasTon} ton`;
+            document.getElementById('kpiCargasSub').innerText = `${Math.round(cargasKg).toLocaleString('pt-BR')} kg agendados`;
+
             document.getElementById('kpiFaltaKg').innerText = (faltaKg / 1000).toFixed(1).replace('.', ',') + ' ton';
         }
 
