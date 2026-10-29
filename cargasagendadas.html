@@ -1,10 +1,126 @@
-<!-- SCRIPT DE CONEXÃO E LÓGICA -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARANAFER - Cargas Agendadas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b1120',
+                        cardBg: '#151e32',
+                        cardHeader: '#1e293b',
+                        accentBlue: '#2563eb',
+                        borderNavy: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0b1120; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0b1120; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-4 md:p-6 custom-scrollbar max-w-7xl mx-auto">
+
+    <!-- CABEÇALHO -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-cardBg p-5 rounded-2xl border border-borderNavy mb-6 gap-4 shadow-xl">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-bold bg-amber-500 text-slate-950 px-3 py-1 rounded-full uppercase tracking-wider">PARANAFER</span>
+                <span id="syncBadge" class="text-xs bg-emerald-900/60 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> A sincronizar...
+                </span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-2">Visão de Cargas Agendadas</h1>
+            <p class="text-sm text-slate-400">Distribuição por Destino e Produtos com Carregamentos Pendentes</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <button onclick="carregarDadosCargas()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold flex items-center gap-2 border border-emerald-500 transition-all shadow-lg">
+                <i class="fa-solid fa-rotate text-white"></i> Sincronizar
+            </button>
+            <a href="index.html" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 border border-slate-700 transition-all">
+                <i class="fa-solid fa-chart-line text-cyan-400"></i> Painel Principal
+            </a>
+            <a href="manual.html" class="px-4 py-2.5 bg-sky-700 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold flex items-center gap-2 border border-sky-600 transition-all shadow-lg">
+                <i class="fa-solid fa-book text-white"></i> Manual
+            </a>
+        </div>
+    </header>
+
+    <!-- CARDS DE RESUMO POR DESTINO -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Rio Preto</span>
+            <div id="totalRioPreto" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Cascavel</span>
+            <div id="totalCascavel" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Guarapuava</span>
+            <div id="totalGuarapu" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Arapongas</span>
+            <div id="totalArapongas" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Londrina</span>
+            <div id="totalLondrina" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+    </div>
+
+    <!-- FILTRO DE BUSCA RÁPIDA -->
+    <div class="bg-cardBg p-4 rounded-xl border border-borderNavy mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div class="relative w-full md:w-96">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
+            <input type="text" id="searchInput" oninput="filtrarTabela()" placeholder="Buscar por produto ou família..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-accentBlue">
+        </div>
+        <div id="contadorResultados" class="text-xs text-slate-400 font-medium">A carregar registos...</div>
+    </div>
+
+    <!-- TABELA DE CARGAS AGENDADAS -->
+    <div class="bg-cardBg rounded-xl border border-borderNavy overflow-hidden shadow-lg mb-8">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left text-sm border-collapse">
+                <thead>
+                    <tr class="bg-cardHeader text-slate-300 font-semibold uppercase tracking-wider border-b border-borderNavy text-xs">
+                        <th class="p-3">Família</th>
+                        <th class="p-3">Produto</th>
+                        <th class="p-3 text-center">Rio Preto</th>
+                        <th class="p-3 text-center">Cascavel</th>
+                        <th class="p-3 text-center">Guarapuava</th>
+                        <th class="p-3 text-center">Arapongas</th>
+                        <th class="p-3 text-center">Londrina</th>
+                        <th class="p-3 text-right">Total Agendado</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-800 text-slate-200">
+                    <!-- Preenchido via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE CONEXÃO E LÓGICA -->
     <script>
         const urlGoogleScript = 'https://script.google.com/macros/s/AKfycbxaVEbo0ba6bDgFG2j_MkOr9mFsntyf40UvQGo8ArP0DxrTIIOSUAduPDlfYm4rI1A/exec';
 
         let dadosGlobais = [];
 
-        // Mapeamento rigoroso e limpo de acordo com a planilha real
         function obterDestinosProduto(nomeProduto) {
             const p = (nomeProduto || '').trim().toUpperCase();
             
@@ -78,7 +194,6 @@
                 tLond += dest.lon;
             });
 
-            // Atualiza os cartões de topo com os totais corretos recalculados
             document.getElementById('totalRioPreto').innerText = tRio.toLocaleString('pt-BR') + ' pç';
             document.getElementById('totalCascavel').innerText = tCasc.toLocaleString('pt-BR') + ' pç';
             document.getElementById('totalGuarapu').innerText = tGuara.toLocaleString('pt-BR') + ' pç';
@@ -140,3 +255,5 @@
 
         window.addEventListener('DOMContentLoaded', carregarDadosCargas);
     </script>
+</body>
+</html>
