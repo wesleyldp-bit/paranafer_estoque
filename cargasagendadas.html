@@ -121,28 +121,25 @@
 
         let dadosGlobais = [];
 
-        // Mapeamento exato baseado na sua planilha de controle de cargas
-        function obterDestinosProduto(nomeProduto) {
-            const p = (nomeProduto || '').trim().toUpperCase();
-            
-            // Estrutura: { rioPreto, cascavel, guarapuava, arapongas, londrina }
-            const mapa = {
-                'EQ45':     { rp: 600, cas: 0, gua: 0, ara: 700, lon: 0 },
-                'EQ92':     { rp: 0,   cas: 0, gua: 0, ara: 500, lon: 0 },
-                'EQ138':    { rp: 0,   cas: 0, gua: 0, ara: 1000,lon: 0 },
-                'Q61':      { rp: 200, cas: 0, gua: 0, ara: 0,   lon: 0 },
-                'Q92':      { rp: 300, cas: 0, gua: 0, ara: 0,   lon: 0 },
-                'H6SLE':    { rp: 240, cas: 0, gua: 0, ara: 0,   lon: 0 },
-                'H8N 12 MTS': { rp: 600, cas: 0, gua: 0, ara: 0,   lon: 0 },
-                'H12 12 MTS': { rp: 100, cas: 0, gua: 500, ara: 0, lon: 0 },
-                '4,2 RL 2TON': { rp: 0, cas: 0, gua: 0, ara: 7000, lon: 0 },
-                '5,0 BARRA':  { rp: 12000, cas: 0, gua: 8000, ara: 0, lon: 0 }
-            };
+        function extrairValor(item, chaves) {
+            if (!item) return 0;
+            const keys = Object.keys(item);
+            for (let t of termosParaBusca(chaves)) {
+                for (let k of keys) {
+                    const current = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (current === t) {
+                        const val = item[k];
+                        if (val !== undefined && val !== null && val !== '') {
+                            return Number(val) || 0;
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
 
-            if (mapa[p]) return mapa[p];
-
-            // Se não estiver no mapa fixo mas tiver agendamento, distribui o total detetado
-            return { rp: 0, cas: 0, gua: 0, ara: 0, lon: 0 };
+        function termosParaBusca(chaves) {
+            return chaves.map(t => t.toLowerCase().replace(/[^a-z0-9]/g, ''));
         }
 
         async function carregarDadosCargas() {
@@ -185,26 +182,27 @@
         }
 
         function processarEExibirCargas(lista) {
-            const comCargas = lista.filter(item => (Number(item.Agendado) || 0) > 0);
+            const comCargas = lista.filter(item => {
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                
+                const totalDestinos = rp + cas + gua + ara + lon;
+                const agendadoGeral = Number(item.Agendado) || 0;
+
+                return totalDestinos > 0 || agendadoGeral > 0;
+            });
 
             let tRio = 0, tCasc = 0, tGuara = 0, tArap = 0, tLond = 0;
 
             comCargas.forEach(item => {
-                let dest = obterDestinosProduto(item.Produto);
-                
-                // Se o produto tem agendamento mas não estava no mapa fixo, atribui ao total agendado geral no destino padrão ou proporcional
-                let totalMap = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
-                let agendadoGeral = Number(item.Agendado) || 0;
-
-                if (totalMap === 0 && agendadoGeral > 0) {
-                    dest.ara = agendadoGeral; // Destino padrão caso seja novo item
-                }
-
-                tRio += dest.rp;
-                tCasc += dest.cas;
-                tGuara += dest.gua;
-                tArap += dest.ara;
-                tLond += dest.lon;
+                tRio += extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO']);
+                tCasc += extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                tGuara += extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                tArap += extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                tLond += extrairValor(item, ['Londrina', 'LONDRINA']);
             });
 
             document.getElementById('totalRioPreto').innerText = tRio.toLocaleString('pt-BR') + ' pç';
@@ -229,16 +227,14 @@
             let somaTotalGeral = 0;
 
             lista.forEach(item => {
-                let dest = obterDestinosProduto(item.Produto);
-                let agendadoGeral = Number(item.Agendado) || 0;
-                let totalMap = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
-
-                if (totalMap === 0 && agendadoGeral > 0) {
-                    dest.ara = agendadoGeral;
-                }
-
-                let totalItem = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
-                if(totalItem === 0) totalItem = agendadoGeral;
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                
+                const totalDestinos = rp + cas + gua + ara + lon;
+                const totalItem = totalDestinos > 0 ? totalDestinos : (Number(item.Agendado) || 0);
 
                 somaTotalGeral += totalItem;
 
@@ -246,11 +242,11 @@
                     <tr class="hover:bg-slate-800/50 border-b border-slate-800 transition-colors">
                         <td class="p-3 text-slate-400">${item.Familia || '-'}</td>
                         <td class="p-3 font-semibold text-white">${item.Produto || '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.rp > 0 ? dest.rp.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.cas > 0 ? dest.cas.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.gua > 0 ? dest.gua.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.ara > 0 ? dest.ara.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.lon > 0 ? dest.lon.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${rp > 0 ? rp.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${cas > 0 ? cas.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${gua > 0 ? gua.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${ara > 0 ? ara.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${lon > 0 ? lon.toLocaleString('pt-BR') : '-'}</td>
                         <td class="p-3 text-right font-mono font-bold text-emerald-400">${totalItem.toLocaleString('pt-BR')} pç</td>
                     </tr>
                 `;
@@ -262,12 +258,18 @@
         function filtrarTabela() {
             const termo = document.getElementById('searchInput').value.toLowerCase();
             const filtrados = dadosGlobais.filter(item => {
-                const agendado = Number(item.Agendado) || 0;
-                if (agendado <= 0) return false;
-
                 const prod = (item.Produto || '').toLowerCase();
                 const fam = (item.Familia || '').toLowerCase();
-                return prod.includes(termo) || fam.includes(termo);
+                
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                
+                const temCarga = (rp + cas + gua + ara + lon) > 0 || (Number(item.Agendado) || 0) > 0;
+                const matchTexto = prod.includes(termo) || fam.includes(termo);
+                return temCarga && matchTexto;
             });
             renderTabelaCargas(filtrados);
         }
