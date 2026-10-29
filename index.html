@@ -1,4 +1,47 @@
-<!-- CABEÇALHO -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARANAFER - Dashboard Gerencial de Estoque</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b1120',
+                        cardBg: '#151e32',
+                        cardHeader: '#1e293b',
+                        accentBlue: '#2563eb',
+                        criticoRed: '#ef4444',
+                        atencaoYellow: '#f59e0b',
+                        okGreen: '#10b981',
+                        borderNavy: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0b1120; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0b1120; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .status-badge-critico { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid #ef4444; }
+        .status-badge-atencao { background-color: rgba(245, 158, 11, 0.2); color: #fde047; border: 1px solid #f59e0b; }
+        .status-badge-ok { background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid #10b981; }
+    </style>
+</head>
+<body class="p-4 md:p-6 custom-scrollbar">
+
+    <!-- CABEÇALHO -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-cardBg p-5 rounded-2xl border border-borderNavy mb-6 gap-4 shadow-xl">
         <div>
             <div class="flex items-center gap-3">
@@ -25,3 +68,31 @@
             </a>
         </div>
     </header>
+
+    <!-- CARDS DE KPI -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Total de Itens</p>
+            <h3 id="kpiTotalItens" class="text-2xl font-bold text-white mt-1">0</h3>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy border-l-4 border-l-red-500">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Itens Críticos / Ruptura</p>
+            <h3 id="kpiCriticos" class="text-2xl font-bold text-red-400 mt-1">0</h3>
+            <p id="kpiRupturaSub" class="text-[11px] text-slate-400 mt-1">0 em ruptura</p>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy border-l-4 border-l-amber-500">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Itens em Atenção</p>
+            <h3 id="kpiAtencao" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Cobertura 30% a 70%</p>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy border-l-4 border-l-emerald-500">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Itens OK</p>
+            <h3 id="kpiOK" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Cobertura &ge; 70%</p>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-borderNavy">
+            <p class="text-xs font-semibold text-slate-400 uppercase">Cargas Agendadas</p>
+            <h3 id="kpiCargas" class="text-2xl font-bold text-cyan-400 mt-1">0 pç</h3>
+            <p class="text-[11px] text-slate-400 mt-1">Arapongas / Cascavel</p>
+        </div>
+        <div class="
