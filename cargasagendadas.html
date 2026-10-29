@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARANAFER - Cargas Agendadas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b1120',
+                        cardBg: '#151e32',
+                        cardHeader: '#1e293b',
+                        accentBlue: '#2563eb',
+                        borderNavy: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0b1120; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0b1120; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-4 md:p-8 custom-scrollbar max-w-7xl mx-auto">
+
+    <!-- CABEÇALHO -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-cardBg p-5 rounded-2xl border border-borderNavy mb-8 gap-4 shadow-xl">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-bold bg-amber-500 text-slate-950 px-3 py-1 rounded-full uppercase tracking-wider">PARANAFER</span>
+                <span id="syncBadge" class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> A carregar dados...
+                </span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-2">Visão de Cargas Agendadas</h1>
+            <p class="text-sm text-slate-400">Distribuição por Destino e Produtos com Carregamentos Pendentes</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <button onclick="carregarDadosCargas()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold flex items-center gap-2 border border-emerald-500 transition-all shadow-lg">
+                <i class="fa-solid fa-rotate text-white"></i> Sincronizar
+            </button>
+            <a href="index.html" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 border border-slate-700 transition-all">
+                <i class="fa-solid fa-chart-line text-cyan-400"></i> Painel Principal
+            </a>
+        </div>
+    </header>
+
+    <!-- CARDS DE RESUMO POR DESTINO -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div class="bg-cardBg p-4 rounded-2xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Rio Preto</span>
+            <div id="totalRioPreto" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-2xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Cascavel</span>
+            <div id="totalCascavel" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-2xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Guarapuava</span>
+            <div id="totalGuarapu" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-2xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Arapongas</span>
+            <div id="totalArapongas" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+        <div class="bg-cardBg p-4 rounded-2xl border border-borderNavy shadow-lg">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Londrina</span>
+            <div id="totalLondrina" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 pç</div>
+        </div>
+    </div>
+
+    <!-- FILTRO DE BUSCA RÁPIDA -->
+    <div class="bg-cardBg p-4 rounded-2xl border border-borderNavy mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div class="relative w-full md:w-96">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+            <input type="text" id="searchInput" oninput="filtrarTabela()" placeholder="Filtrar por produto ou destino..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+        </div>
+        <div id="contadorResultados" class="text-xs text-slate-400 font-medium">A carregar registos...</div>
+    </div>
+
+    <!-- TABELA DE CARGAS AGENDADAS -->
+    <div class="bg-cardBg rounded-2xl border border-borderNavy overflow-hidden shadow-xl mb-12">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-cardHeader text-slate-400 text-xs uppercase tracking-wider border-b border-borderNavy">
+                        <th class="p-4 font-bold">Família</th>
+                        <th class="p-4 font-bold">Produto</th>
+                        <th class="p-4 font-bold text-center">Rio Preto</th>
+                        <th class="p-4 font-bold text-center">Cascavel</th>
+                        <th class="p-4 font-bold text-center">Guarapuava</th>
+                        <th class="p-4 font-bold text-center">Arapongas</th>
+                        <th class="p-4 font-bold text-center">Londrina</th>
+                        <th class="p-4 font-bold text-right">Total Agendado</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-800 text-sm">
+                    <!-- Preenchido via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE CONEXÃO AO GAS / GOOGLE SHEETS -->
+    <script>
+        // Substitua abaixo pelo link da sua Web App do Google Apps Script (o mesmo usado no index.html)
+        const WEB_APP_URL = "O_SEU_LINK_DO_GOOGLE_APPS_SCRIPT_AQUI";
+
+        let dadosGlobais = [];
+
+        async function carregarDadosCargas() {
+            const badge = document.getElementById('syncBadge');
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A sincronizar...`;
+
+            try {
+                const response = await fetch(WEB_APP_URL);
+                const resultado = await response.json();
+                
+                if (resultado && resultado.dados) {
+                    dadosGlobais = resultado.dados;
+                    
+                    // Atualiza data do Sheets se houver
+                    if(resultado.ultimaAtualizacao) {
+                        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Atualizado no Sheets em: ${resultado.ultimaAtualizacao}`;
+                    } else {
+                        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Sincronizado com Sucesso`;
+                    }
+
+                    processarEExibirCargas(dadosGlobais);
+                }
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Erro de Sincronização`;
+            }
+        }
+
+        function processarEExibirCargas(lista) {
+            // Filtra apenas itens que tenham alguma carga agendada (> 0 em qualquer destino)
+            // Nota: Certifique-se de que o seu Apps Script mapeia as colunas de cargas nas propriedades do objeto (ex: RioPreto, Cascavel, Guarapu, Arapongas, Londrina)
+            const comCargas = lista.filter(item => {
+                const rp = Number(item.RioPreto || item.Cariacica || 0); // Ajuste conforme a chave exata retornada pelo GAS
+                const cas = Number(item.Cascavel || 0);
+                const gua = Number(item.Guarapu || item.Guarapuava || 0);
+                const ara = Number(item.Arapongas || 0);
+                const lon = Number(item.Londrina || 0);
+                return (rp + cas + gua + ara + lon) > 0;
+            });
+
+            // Totais por destino
+            let tRio = 0, tCasc = 0, tGuara = 0, tArap = 0, tLond = 0;
+
+            comCargas.forEach(item => {
+                tRio += Number(item.RioPreto || 0);
+                tCasc += Number(item.Cascavel || 0);
+                tGuara += Number(item.Guarapu || 0);
+                tArap += Number(item.Arapongas || 0);
+                tLond += Number(item.Londrina || 0);
+            });
+
+            document.getElementById('totalRioPreto').innerText = tRio.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalCascavel').innerText = tCasc.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalGuarapu').innerText = tGuara.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalArapongas').innerText = tArap.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalLondrina').innerText = tLond.toLocaleString('pt-BR') + ' pç';
+
+            renderTabelaCargas(comCargas);
+        }
+
+        function renderTabelaCargas(lista) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Nenhuma carga agendada encontrada no momento.</td></tr>`;
+                document.getElementById('contadorResultados').innerText = `0 registos encontrados`;
+                return;
+            }
+
+            let somaTotalGeral = 0;
+
+            lista.forEach(item => {
+                const rp = Number(item.RioPreto || 0);
+                const cas = Number(item.Cascavel || 0);
+                const gua = Number(item.Guarapu || 0);
+                const ara = Number(item.Arapongas || 0);
+                const lon = Number(item.Londrina || 0);
+                const totalItem = rp + cas + gua + ara + lon;
+
+                somaTotalGeral += totalItem;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/50 transition-colors">
+                        <td class="p-4 text-slate-400">${item.Familia || '-'}</td>
+                        <td class="p-4 font-semibold text-white">${item.Produto || '-'}</td>
+                        <td class="p-4 text-center font-mono ${rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${rp > 0 ? rp.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-4 text-center font-mono ${cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${cas > 0 ? cas.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-4 text-center font-mono ${gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${gua > 0 ? gua.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-4 text-center font-mono ${ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${ara > 0 ? ara.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-4 text-center font-mono ${lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${lon > 0 ? lon.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-4 text-right font-mono font-bold text-emerald-400">${totalItem.toLocaleString('pt-BR')} pç</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('contadorResultados').innerText = `A exibir ${lista.length} produtos com cargas agendadas (Total Geral: ${somaTotalGeral.toLocaleString('pt-BR')} peças)`;
+        }
+
+        function filtrarTabela() {
+            const termo = document.getElementById('searchInput').value.toLowerCase();
+            const filtrados = dadosGlobais.filter(item => {
+                const prod = (item.Produto || '').toLowerCase();
+                const fam = (item.Familia || '').toLowerCase();
+                const rp = Number(item.RioPreto || 0);
+                const cas = Number(item.Cascavel || 0);
+                const gua = Number(item.Guarapu || 0);
+                const ara = Number(item.Arapongas || 0);
+                const lon = Number(item.Londrina || 0);
+                
+                const temCarga = (rp + cas + gua + ara + lon) > 0;
+                const matchTexto = prod.includes(termo) || fam.includes(termo);
+                return temCarga && matchTexto;
+            });
+            renderTabelaCargas(filtrados);
+        }
+
+        // Executa ao abrir a página
+        window.onload = carregarDadosCargas;
+    </script>
+</body>
+</html>
