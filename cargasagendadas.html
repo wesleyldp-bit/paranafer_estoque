@@ -122,6 +122,7 @@
         let dadosGlobais = [];
 
         function extrairValor(item, chaves) {
+            if (!item) return 0;
             for (let k of chaves) {
                 if (item[k] !== undefined && item[k] !== null && item[k] !== '') {
                     return Number(item[k]) || 0;
@@ -136,24 +137,24 @@
 
             try {
                 const response = await fetch(urlGoogleScript);
-                const resultado = await response.json();
+                const data = await response.json();
                 
                 let listaProdutos = [];
                 let ultimaMod = "Desconhecida";
 
-                if (Array.isArray(resultado)) {
-                    listaProdutos = resultado;
-                } else if (resultado && Array.isArray(resultado.dados)) {
-                    listaProdutos = resultado.dados;
-                    ultimaMod = resultado.ultimaAtualizacao || "Recente";
-                } else if (resultado && Array.isArray(resultado.produtos)) {
-                    listaProdutos = resultado.produtos;
+                if (Array.isArray(data)) {
+                    listaProdutos = data;
+                } else if (data && Array.isArray(data.dados)) {
+                    listaProdutos = data.dados;
+                    ultimaMod = data.ultimaAtualizacao || "Recente";
+                } else if (data && Array.isArray(data.produtos)) {
+                    listaProdutos = data.produtos;
                 }
 
-                if (listaProdutos.length > 0) {
+                if (listaProdutos && listaProdutos.length > 0) {
                     dadosGlobais = listaProdutos;
                     
-                    if(listaProdutos[0].UltimaAtualizacaoPlanilha) {
+                    if (listaProdutos[0] && listaProdutos[0].UltimaAtualizacaoPlanilha) {
                         ultimaMod = listaProdutos[0].UltimaAtualizacaoPlanilha;
                     }
 
@@ -162,11 +163,11 @@
                     processarEExibirCargas(dadosGlobais);
                 } else {
                     badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Sem dados encontrados';
-                    document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">A API respondeu, mas não encontrou registos válidos.</td></tr>`;
+                    document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Nenhum dado retornado pela planilha.</td></tr>`;
                 }
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
-                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Erro de Ligação';
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Erro de Conexão';
             }
         }
 
@@ -207,8 +208,8 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
-            if (lista.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Nenhuma carga agendada encontrada.</td></tr>`;
+            if (!lista || lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Nenhuma carga agendada encontrada no momento.</td></tr>`;
                 document.getElementById('contadorResultados').innerText = `0 registos encontrados`;
                 return;
             }
