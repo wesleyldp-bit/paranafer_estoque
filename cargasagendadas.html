@@ -86,4 +86,160 @@
     <!-- FILTRO DE BUSCA RÁPIDA -->
     <div class="bg-cardBg p-4 rounded-xl border border-borderNavy mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div class="relative w-full md:w-96">
-            <i class="fa-solid fa-magnifying-glass absolute left
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
+            <input type="text" id="searchInput" oninput="filtrarTabela()" placeholder="Buscar por produto ou família..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-accentBlue">
+        </div>
+        <div id="contadorResultados" class="text-xs text-slate-400 font-medium">A carregar registos...</div>
+    </div>
+
+    <!-- TABELA DE CARGAS AGENDADAS -->
+    <div class="bg-cardBg rounded-xl border border-borderNavy overflow-hidden shadow-lg mb-8">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left text-sm border-collapse">
+                <thead>
+                    <tr class="bg-cardHeader text-slate-300 font-semibold uppercase tracking-wider border-b border-borderNavy text-xs">
+                        <th class="p-3">Família</th>
+                        <th class="p-3">Produto</th>
+                        <th class="p-3 text-center">Rio Preto</th>
+                        <th class="p-3 text-center">Cascavel</th>
+                        <th class="p-3 text-center">Guarapuava</th>
+                        <th class="p-3 text-center">Arapongas</th>
+                        <th class="p-3 text-center">Londrina</th>
+                        <th class="p-3 text-right">Total Agendado</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-800 text-slate-200">
+                    <!-- Preenchido via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE CONEXÃO E LÓGICA -->
+    <script>
+        const urlGoogleScript = 'https://script.google.com/macros/s/AKfycbxaVEbo0ba6bDgFG2j_MkOr9mFsntyf40UvQGo8ArP0DxrTIIOSUAduPDlfYm4rI1A/exec';
+
+        let dadosGlobais = [];
+
+        // Função auxiliar para procurar propriedades com diferentes variações de nomes na planilha
+        function extrairValor(item, chaves) {
+            for (let k of chaves) {
+                if (item[k] !== undefined && item[k] !== null && item[k] !== '') {
+                    return Number(item[k]) || 0;
+                }
+            }
+            return 0;
+        }
+
+        async function carregarDadosCargas() {
+            const badge = document.getElementById('syncBadge');
+            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> A sincronizar...';
+
+            try {
+                const response = await fetch(urlGoogleScript);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    dadosGlobais = data;
+                    
+                    const ultimaMod = data[0].UltimaAtualizacaoPlanilha || "Desconhecida";
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Atualizado no Sheets em: ${ultimaMod}`;
+
+                    processarEExibirCargas(dadosGlobais);
+                } else {
+                    badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Sem dados';
+                }
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Erro na Sincronização';
+            }
+        }
+
+        function processarEExibirCargas(lista) {
+            const comCargas = lista.filter(item => {
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO', 'Rio_Preto']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                
+                const totalDestinos = rp + cas + gua + ara + lon;
+                const agendadoGeral = Number(item.Agendado) || 0;
+
+                return totalDestinos > 0 || agendadoGeral > 0;
+            });
+
+            let tRio = 0, tCasc = 0, tGuara = 0, tArap = 0, tLond = 0;
+
+            comCargas.forEach(item => {
+                tRio += extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO', 'Rio_Preto']);
+                tCasc += extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                tGuara += extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                tArap += extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                tLond += extrairValor(item, ['Londrina', 'LONDRINA']);
+            });
+
+            document.getElementById('totalRioPreto').innerText = tRio.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalCascavel').innerText = tCasc.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalGuarapu').innerText = tGuara.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalArapongas').innerText = tArap.toLocaleString('pt-BR') + ' pç';
+            document.getElementById('totalLondrina').innerText = tLond.toLocaleString('pt-BR') + ' pç';
+
+            renderTabelaCargas(comCargas);
+        }
+
+        function renderTabelaCargas(lista) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Nenhuma carga agendada encontrada.</td></tr>`;
+                document.getElementById('contadorResultados').innerText = `0 registos encontrados`;
+                return;
+            }
+
+            let somaTotalGeral = 0;
+
+            lista.forEach(item => {
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO', 'Rio_Preto']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                
+                const totalDestinos = rp + cas + gua + ara + lon;
+                const totalItem = totalDestinos > 0 ? totalDestinos : (Number(item.Agendado) || 0);
+
+                somaTotalGeral += totalItem;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/50 border-b border-slate-800 transition-colors">
+                        <td class="p-3 text-slate-400">${item.Familia || '-'}</td>
+                        <td class="p-3 font-semibold text-white">${item.Produto || '-'}</td>
+                        <td class="p-3 text-center font-mono ${rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${rp > 0 ? rp.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${cas > 0 ? cas.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${gua > 0 ? gua.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${ara > 0 ? ara.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${lon > 0 ? lon.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-right font-mono font-bold text-emerald-400">${totalItem.toLocaleString('pt-BR')} pç</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('contadorResultados').innerText = `Exibindo ${lista.length} produtos com agendamento (Total Geral: ${somaTotalGeral.toLocaleString('pt-BR')} pç)`;
+        }
+
+        function filtrarTabela() {
+            const termo = document.getElementById('searchInput').value.toLowerCase();
+            const filtrados = dadosGlobais.filter(item => {
+                const prod = (item.Produto || '').toLowerCase();
+                const fam = (item.Familia || '').toLowerCase();
+                
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO', 'Rio_Preto']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                
+                const temCarga = (rp + cas + gua + ara + lon) > 0 || (Number(item.Agendado) || 0) > 0;
+                const matchTexto = prod.includes(termo) ||
