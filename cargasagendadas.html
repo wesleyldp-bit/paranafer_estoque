@@ -43,7 +43,7 @@
                 </span>
             </div>
             <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-2">Visão de Cargas Agendadas</h1>
-            <p class="text-sm text-slate-400">Distribuição por Destino e Produtos com Carregamentos Pendentes</p>
+            <p class="text-sm text-slate-400">Distribuição por Destino e Peso Total (Kg) dos Carregamentos Pendentes</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
@@ -59,27 +59,27 @@
         </div>
     </header>
 
-    <!-- CARDS DE RESUMO POR DESTINO -->
+    <!-- CARDS DE RESUMO POR DESTINO (EM KG) -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
             <span class="text-xs text-slate-400 font-semibold uppercase">Rio Preto</span>
-            <div id="totalRioPreto" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0</div>
+            <div id="totalRioPreto" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 Kg</div>
         </div>
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
             <span class="text-xs text-slate-400 font-semibold uppercase">Cascavel</span>
-            <div id="totalCascavel" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0</div>
+            <div id="totalCascavel" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 Kg</div>
         </div>
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
             <span class="text-xs text-slate-400 font-semibold uppercase">Guarapuava</span>
-            <div id="totalGuarapu" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0</div>
+            <div id="totalGuarapu" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 Kg</div>
         </div>
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
             <span class="text-xs text-slate-400 font-semibold uppercase">Arapongas</span>
-            <div id="totalArapongas" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0</div>
+            <div id="totalArapongas" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 Kg</div>
         </div>
         <div class="bg-cardBg p-4 rounded-xl border border-borderNavy shadow-lg">
             <span class="text-xs text-slate-400 font-semibold uppercase">Londrina</span>
-            <div id="totalLondrina" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0</div>
+            <div id="totalLondrina" class="text-xl md:text-2xl font-black text-cyan-400 mt-1">0 Kg</div>
         </div>
     </div>
 
@@ -121,7 +121,6 @@
 
         let dadosGlobais = [];
 
-        // Mapeamento correto exatamente alinhado com a planilha Sheets (Coluna F = Arapongas)
         function obterDestinosProduto(nomeProduto) {
             const p = (nomeProduto || '').trim().toUpperCase();
             
@@ -142,7 +141,6 @@
             return { rp: 0, cas: 0, gua: 0, ara: 0, lon: 0 };
         }
 
-        // Define a unidade de medida adequada (Kg para Outros / Rolos / Barras, pç para Telas e Treliças)
         function obterUnidade(familia, produto) {
             const fam = (familia || '').trim().toUpperCase();
             const prod = (produto || '').trim().toUpperCase();
@@ -194,22 +192,25 @@
         function processarEExibirCargas(lista) {
             const comCargas = lista.filter(item => (Number(item.Agendado) || 0) > 0);
 
-            let tRio = 0, tCasc = 0, tGuara = 0, tArap = 0, tLond = 0;
+            let tRioKg = 0, tCascKg = 0, tGuaraKg = 0, tArapKg = 0, tLondKg = 0;
 
             comCargas.forEach(item => {
                 let dest = obterDestinosProduto(item.Produto);
-                tRio += dest.rp;
-                tCasc += dest.cas;
-                tGuara += dest.gua;
-                tArap += dest.ara;
-                tLond += dest.lon;
+                let pesoUnit = Number(item.Peso) || 1; // Lê o peso dinâmico vindo da coluna J do Sheets
+
+                tRioKg += dest.rp * pesoUnit;
+                tCascKg += dest.cas * pesoUnit;
+                tGuaraKg += dest.gua * pesoUnit;
+                tArapKg += dest.ara * pesoUnit;
+                tLondKg += dest.lon * pesoUnit;
             });
 
-            document.getElementById('totalRioPreto').innerText = tRio.toLocaleString('pt-BR');
-            document.getElementById('totalCascavel').innerText = tCasc.toLocaleString('pt-BR');
-            document.getElementById('totalGuarapu').innerText = tGuara.toLocaleString('pt-BR');
-            document.getElementById('totalArapongas').innerText = tArap.toLocaleString('pt-BR');
-            document.getElementById('totalLondrina').innerText = tLond.toLocaleString('pt-BR');
+            // Atualiza os cartões de topo multiplicando pelas quantidades e pesos reais em Kg
+            document.getElementById('totalRioPreto').innerText = Math.round(tRioKg).toLocaleString('pt-BR') + ' Kg';
+            document.getElementById('totalCascavel').innerText = Math.round(tCascKg).toLocaleString('pt-BR') + ' Kg';
+            document.getElementById('totalGuarapu').innerText = Math.round(tGuaraKg).toLocaleString('pt-BR') + ' Kg';
+            document.getElementById('totalArapongas').innerText = Math.round(tArapKg).toLocaleString('pt-BR') + ' Kg';
+            document.getElementById('totalLondrina').innerText = Math.round(tLondKg).toLocaleString('pt-BR') + ' Kg';
 
             renderTabelaCargas(comCargas);
         }
