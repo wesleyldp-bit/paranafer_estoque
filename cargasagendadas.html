@@ -121,27 +121,24 @@
 
         let dadosGlobais = [];
 
-        // Mapeamento exato baseado na sua planilha de controle de cargas
+        // Mapeamento corrigido 100% alinhado com a planilha da imagem
         function obterDestinosProduto(nomeProduto) {
             const p = (nomeProduto || '').trim().toUpperCase();
             
-            // Estrutura: { rioPreto, cascavel, guarapuava, arapongas, londrina }
             const mapa = {
-                'EQ45':     { rp: 600, cas: 0, gua: 0, ara: 700, lon: 0 },
-                'EQ92':     { rp: 0,   cas: 0, gua: 0, ara: 500, lon: 0 },
-                'EQ138':    { rp: 0,   cas: 0, gua: 0, ara: 1000,lon: 0 },
-                'Q61':      { rp: 200, cas: 0, gua: 0, ara: 0,   lon: 0 },
-                'Q92':      { rp: 300, cas: 0, gua: 0, ara: 0,   lon: 0 },
-                'H6SLE':    { rp: 240, cas: 0, gua: 0, ara: 0,   lon: 0 },
-                'H8N 12 MTS': { rp: 600, cas: 0, gua: 0, ara: 0,   lon: 0 },
-                'H12 12 MTS': { rp: 100, cas: 0, gua: 500, ara: 0, lon: 0 },
-                '4,2 RL 2TON': { rp: 0, cas: 0, gua: 0, ara: 7000, lon: 0 },
-                '5,0 BARRA':  { rp: 12000, cas: 0, gua: 8000, ara: 0, lon: 0 }
+                'EQ45':        { rp: 600,   cas: 0, gua: 0,    ara: 700,  lon: 0 },
+                'EQ92':        { rp: 0,     cas: 0, gua: 0,    ara: 500,  lon: 0 },
+                'EQ138':       { rp: 0,     cas: 0, gua: 0,    ara: 1000, lon: 0 },
+                'Q61':         { rp: 200,   cas: 0, gua: 0,    ara: 0,    lon: 0 },
+                'Q92':         { rp: 300,   cas: 0, gua: 0,    ara: 0,    lon: 0 },
+                'H6SLE':       { rp: 240,   cas: 0, gua: 0,    ara: 0,    lon: 0 },
+                'H8N 12 MTS':  { rp: 600,   cas: 0, gua: 0,    ara: 0,    lon: 0 },
+                'H12 12 MTS':  { rp: 100,   cas: 0, gua: 500,  ara: 0,    lon: 0 },
+                '4,2 RL 2TON': { rp: 0,     cas: 0, gua: 7000, ara: 0,    lon: 0 },
+                '5,0 BARRA':   { rp: 12000, cas: 0, gua: 8000, ara: 0,    lon: 0 }
             };
 
             if (mapa[p]) return mapa[p];
-
-            // Se não estiver no mapa fixo mas tiver agendamento, distribui o total detetado
             return { rp: 0, cas: 0, gua: 0, ara: 0, lon: 0 };
         }
 
@@ -191,15 +188,6 @@
 
             comCargas.forEach(item => {
                 let dest = obterDestinosProduto(item.Produto);
-                
-                // Se o produto tem agendamento mas não estava no mapa fixo, atribui ao total agendado geral no destino padrão ou proporcional
-                let totalMap = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
-                let agendadoGeral = Number(item.Agendado) || 0;
-
-                if (totalMap === 0 && agendadoGeral > 0) {
-                    dest.ara = agendadoGeral; // Destino padrão caso seja novo item
-                }
-
                 tRio += dest.rp;
                 tCasc += dest.cas;
                 tGuara += dest.gua;
@@ -231,12 +219,6 @@
             lista.forEach(item => {
                 let dest = obterDestinosProduto(item.Produto);
                 let agendadoGeral = Number(item.Agendado) || 0;
-                let totalMap = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
-
-                if (totalMap === 0 && agendadoGeral > 0) {
-                    dest.ara = agendadoGeral;
-                }
-
                 let totalItem = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
                 if(totalItem === 0) totalItem = agendadoGeral;
 
