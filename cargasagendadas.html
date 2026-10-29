@@ -121,11 +121,20 @@
 
         let dadosGlobais = [];
 
-        function extrairValor(item, chaves) {
+        // Busca o valor no objeto testando variações de chave sem diferenciar maiúsculas/minúsculas
+        function extrairValor(item, termos) {
             if (!item) return 0;
-            for (let k of chaves) {
-                if (item[k] !== undefined && item[k] !== null && item[k] !== '') {
-                    return Number(item[k]) || 0;
+            const keys = Object.keys(item);
+            for (let t of termos) {
+                const target = t.toLowerCase().replace(/[^a-z0-9]/g, '');
+                for (let k of keys) {
+                    const current = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (current === target) {
+                        const val = item[k];
+                        if (val !== undefined && val !== null && val !== '') {
+                            return Number(val) || 0;
+                        }
+                    }
                 }
             }
             return 0;
@@ -173,9 +182,9 @@
 
         function processarEExibirCargas(lista) {
             const comCargas = lista.filter(item => {
-                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO', 'Rio_Preto']);
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO']);
                 const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
-                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPU']);
                 const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
                 const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
                 
@@ -188,9 +197,9 @@
             let tRio = 0, tCasc = 0, tGuara = 0, tArap = 0, tLond = 0;
 
             comCargas.forEach(item => {
-                tRio += extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO', 'Rio_Preto']);
+                tRio += extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO']);
                 tCasc += extrairValor(item, ['Cascavel', 'CASCAVEL']);
-                tGuara += extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                tGuara += extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPU']);
                 tArap += extrairValor(item, ['Arapongas', 'ARAPONGAS']);
                 tLond += extrairValor(item, ['Londrina', 'LONDRINA']);
             });
@@ -217,9 +226,9 @@
             let somaTotalGeral = 0;
 
             lista.forEach(item => {
-                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO', 'Rio_Preto']);
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO']);
                 const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
-                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPU']);
                 const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
                 const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
                 
@@ -251,9 +260,9 @@
                 const prod = (item.Produto || '').toLowerCase();
                 const fam = (item.Familia || '').toLowerCase();
                 
-                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO', 'RIO PRETO', 'Rio_Preto']);
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO']);
                 const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
-                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'GUARAPU']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPU']);
                 const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
                 const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
                 
