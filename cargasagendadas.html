@@ -121,28 +121,26 @@
 
         let dadosGlobais = [];
 
-        // Mapeamento exato e validado por produto de acordo com a planilha oficial
-        function obterDestinosProduto(nomeProduto) {
-            const p = (nomeProduto || '').trim().toUpperCase();
-            
-            const mapa = {
-                'EQ45':        { rp: 600,   cas: 0, gua: 0,    ara: 700,  lon: 0 },
-                'EQ92':        { rp: 0,     cas: 0, gua: 0,    ara: 500,  lon: 0 },
-                'EQ138':       { rp: 0,     cas: 0, gua: 0,    ara: 1000, lon: 0 },
-                'Q61':         { rp: 200,   cas: 0, gua: 0,    ara: 0,    lon: 0 },
-                'Q92':         { rp: 300,   cas: 0, gua: 0,    ara: 0,    lon: 0 },
-                'H6SLE':       { rp: 240,   cas: 0, gua: 0,    ara: 0,    lon: 0 },
-                'H8N 12 MTS':  { rp: 600,   cas: 0, gua: 0,    ara: 0,    lon: 0 },
-                'H12 12 MTS':  { rp: 100,   cas: 0, gua: 500,  ara: 0,    lon: 0 },
-                '4,2 RL 2TON': { rp: 0,     cas: 0, gua: 7000, ara: 0,    lon: 0 },
-                '5,0 BARRA':   { rp: 12000, cas: 0, gua: 8000, ara: 0,    lon: 0 }
-            };
-
-            if (mapa[p]) return mapa[p];
-            return { rp: 0, cas: 0, gua: 0, ara: 0, lon: 0 };
+        // Extrai valor de forma flexível buscando nas chaves do JSON da linha
+        function extrairValor(item, chaves) {
+            if (!item) return 0;
+            const keys = Object.keys(item);
+            for (let t of chaves) {
+                const target = t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+                for (let k of keys) {
+                    const current = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+                    if (current === target) {
+                        const val = item[k];
+                        if (val !== undefined && val !== null && val !== '') {
+                            return Number(val) || 0;
+                        }
+                    }
+                }
+            }
+            return 0;
         }
 
-        // Define se a unidade é Kg (para Outros / barras / rolos) ou pç
+        // Define unidade correta (Kg ou pç)
         function obterUnidade(familia, produto) {
             const fam = (familia || '').trim().toUpperCase();
             const prod = (produto || '').trim().toUpperCase();
@@ -192,17 +190,26 @@
         }
 
         function processarEExibirCargas(lista) {
-            const comCargas = lista.filter(item => (Number(item.Agendado) || 0) > 0);
+            // Filtra linhas que possuam agendamento em alguma coluna de destino ou na coluna geral
+            const comCargas = lista.filter(item => {
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA', 'Guarapu']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                const agendadoGeral = extrairValor(item, ['Agendado', 'AGENDADO']);
+
+                return (rp + cas + gua + ara + lon + agendadoGeral) > 0;
+            });
 
             let tRio = 0, tCasc = 0, tGuara = 0, tArap = 0, tLond = 0;
 
             comCargas.forEach(item => {
-                let dest = obterDestinosProduto(item.Produto);
-                tRio += dest.rp;
-                tCasc += dest.cas;
-                tGuara += dest.gua;
-                tArap += dest.ara;
-                tLond += dest.lon;
+                tRio += extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO']);
+                tCasc += extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                tGuara += extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA']);
+                tArap += extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                tLond += extrairValor(item, ['Londrina', 'LONDRINA']);
             });
 
             document.getElementById('totalRioPreto').innerText = tRio.toLocaleString('pt-BR') + ' pç';
@@ -227,10 +234,15 @@
             let somaTotalGeral = 0;
 
             lista.forEach(item => {
-                let dest = obterDestinosProduto(item.Produto);
-                let agendadoGeral = Number(item.Agendado) || 0;
-                let totalItem = dest.rp + dest.cas + dest.gua + dest.ara + dest.lon;
-                if(totalItem === 0) totalItem = agendadoGeral;
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                
+                const totalDestinos = rp + cas + gua + ara + lon;
+                const agendadoGeral = extrairValor(item, ['Agendado', 'AGENDADO']);
+                const totalItem = totalDestinos > 0 ? totalDestinos : agendadoGeral;
 
                 somaTotalGeral += totalItem;
 
@@ -240,11 +252,11 @@
                     <tr class="hover:bg-slate-800/50 border-b border-slate-800 transition-colors">
                         <td class="p-3 text-slate-400">${item.Familia || '-'}</td>
                         <td class="p-3 font-semibold text-white">${item.Produto || '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.rp > 0 ? dest.rp.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.cas > 0 ? dest.cas.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.gua > 0 ? dest.gua.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.ara > 0 ? dest.ara.toLocaleString('pt-BR') : '-'}</td>
-                        <td class="p-3 text-center font-mono ${dest.lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${dest.lon > 0 ? dest.lon.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${rp > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${rp > 0 ? rp.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${cas > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${cas > 0 ? cas.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${gua > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${gua > 0 ? gua.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${ara > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${ara > 0 ? ara.toLocaleString('pt-BR') : '-'}</td>
+                        <td class="p-3 text-center font-mono ${lon > 0 ? 'text-cyan-400 font-bold' : 'text-slate-600'}">${lon > 0 ? lon.toLocaleString('pt-BR') : '-'}</td>
                         <td class="p-3 text-right font-mono font-bold text-emerald-400">${totalItem.toLocaleString('pt-BR')} ${unidade}</td>
                     </tr>
                 `;
@@ -256,8 +268,14 @@
         function filtrarTabela() {
             const termo = document.getElementById('searchInput').value.toLowerCase();
             const filtrados = dadosGlobais.filter(item => {
-                const agendado = Number(item.Agendado) || 0;
-                if (agendado <= 0) return false;
+                const rp = extrairValor(item, ['RioPreto', 'Rio Preto', 'RIOPRETO']);
+                const cas = extrairValor(item, ['Cascavel', 'CASCAVEL']);
+                const gua = extrairValor(item, ['Guarapu', 'Guarapuava', 'GUARAPUAVA']);
+                const ara = extrairValor(item, ['Arapongas', 'ARAPONGAS']);
+                const lon = extrairValor(item, ['Londrina', 'LONDRINA']);
+                const agendadoGeral = extrairValor(item, ['Agendado', 'AGENDADO']);
+
+                if ((rp + cas + gua + ara + lon + agendadoGeral) <= 0) return false;
 
                 const prod = (item.Produto || '').toLowerCase();
                 const fam = (item.Familia || '').toLowerCase();
